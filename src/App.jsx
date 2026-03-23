@@ -6,7 +6,7 @@ function App() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-  fetch('/api/hello')
+  fetch(`${import.meta.env.VITE_API_URL}/api/hello`)
     .then(res => {
       if (!res.ok) throw new Error()
       return res.text()
