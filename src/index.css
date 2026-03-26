@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+@theme {
+  --color-reddot-950: #141210;
+  --color-reddot-900: #1f1c1a;
+  --color-reddot-800: #2c2825;
+  --color-reddot-red: #c0392b;
+  --color-reddot-red-light: #e74c3c;
+  --color-reddot-text: #faf7f4;
+  --color-reddot-muted: #a89890;
+}
