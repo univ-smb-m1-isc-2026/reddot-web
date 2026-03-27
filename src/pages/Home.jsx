@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../api/client'
+import { formatDate } from '../utils/date'
 
 export default function Home() {
   const [topics, setTopics] = useState([])
@@ -176,14 +177,20 @@ export default function Home() {
               </div>
 
               <div className="flex items-center gap-1.5 mt-3 text-xs text-reddot-muted">
-                <div className="w-4 h-4 rounded-full bg-reddot-red flex items-center justify-center text-[9px] font-bold shrink-0">
-                  {topic.author[0].toUpperCase()}
-                </div>
-                <span>{topic.author}</span>
+                <Link
+                  to={`/profile/${topic.author}`}
+                  onClick={e => e.stopPropagation()}
+                  className="flex items-center gap-1.5 hover:text-reddot-text transition"
+                >
+                  <div className="w-4 h-4 rounded-full bg-reddot-red flex items-center justify-center text-[9px] font-bold shrink-0">
+                    {topic.author[0].toUpperCase()}
+                  </div>
+                  <span>{topic.author}</span>
+                </Link>
                 <span className="text-reddot-800 mx-0.5">·</span>
                 <span>{topic.views} vues</span>
                 <span className="text-reddot-800 mx-0.5">·</span>
-                <span>{new Date(topic.createdAt).toLocaleDateString('fr-FR')}</span>
+                <span>{formatDate(topic.createdAt)}</span>
               </div>
             </div>
           ))}

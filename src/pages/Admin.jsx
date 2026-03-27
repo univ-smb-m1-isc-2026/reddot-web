@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../api/client'
+import { formatDate } from '../utils/date'
 
 function Toggle({ value, onToggle, labelOn, labelOff }) {
   return (
@@ -34,7 +35,7 @@ function ReportCard({ report, onResolve, onUnresolve, onToggle, onToggleResolved
         <span className="text-xs text-reddot-muted">signalé par <span className="text-reddot-text font-medium">{report.reporter}</span></span>
         {resolved && <span className="text-xs text-green-400 font-medium">Résolu</span>}
         <span className="text-xs text-reddot-muted ml-auto tabular-nums">
-          {new Date(report.createdAt).toLocaleDateString('fr-FR')}
+          {formatDate(report.createdAt)}
         </span>
       </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { formatDate } from '../utils/date'
 
 export default function Profile() {
   const { username } = useParams()
@@ -49,7 +50,7 @@ export default function Profile() {
                 )}
               </div>
               <p className="text-reddot-muted text-sm mt-0.5">
-                Membre depuis {new Date(profile.createdAt).toLocaleDateString('fr-FR')}
+                Membre depuis {formatDate(profile.createdAt)}
               </p>
               <div className="flex items-center gap-3 mt-2 text-xs text-reddot-muted">
                 <span>{profile.topics?.length ?? 0} topic{profile.topics?.length !== 1 ? 's' : ''}</span>
@@ -105,7 +106,7 @@ export default function Profile() {
               >
                 <p className="text-sm text-reddot-text leading-relaxed line-clamp-2">{msg.content}</p>
                 <p className="text-xs text-reddot-muted mt-2">
-                  {new Date(msg.createdAt).toLocaleDateString('fr-FR')}
+                  {formatDate(msg.createdAt)}
                 </p>
               </div>
             ))}

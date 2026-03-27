@@ -1,9 +1,33 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
+import { formatDate } from '../utils/date'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../api/client'
+import MentionTextarea from '../components/MentionTextarea'
 
-function Message({ msg, user, onReply, depth = 0, topicLocked }) {
+function renderContent(content) {
+  const parts = content.split(/(@\w+)/g)
+  return parts.map((part, i) =>
+    /^@\w+$/.test(part)
+      ? <Link key={i} to={`/profile/${part.slice(1)}`} className="text-reddot-red-light font-semibold hover:underline">{part}</Link>
+      : <span key={i}>{part}</span>
+  )
+}
+
+function collectParticipants(messages, topicAuthor) {
+  const names = new Set()
+  if (topicAuthor) names.add(topicAuthor)
+  function traverse(msgs) {
+    for (const msg of msgs) {
+      names.add(msg.author)
+      if (msg.replies?.length) traverse(msg.replies)
+    }
+  }
+  traverse(messages)
+  return [...names]
+}
+
+function Message({ msg, user, onReply, depth = 0, topicLocked, participants }) {
   const [showReply, setShowReply] = useState(false)
   const [replyContent, setReplyContent] = useState('')
   const [score, setScore] = useState(msg.score)
@@ -84,10 +108,12 @@ function Message({ msg, user, onReply, depth = 0, topicLocked }) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-reddot-800/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-reddot-red flex items-center justify-center text-xs font-bold shrink-0">
-              {msg.author[0].toUpperCase()}
-            </div>
-            <span className="text-sm font-semibold">{msg.author}</span>
+            <Link to={`/profile/${msg.author}`} className="flex items-center gap-2.5 hover:opacity-80 transition">
+              <div className="w-7 h-7 rounded-full bg-reddot-red flex items-center justify-center text-xs font-bold shrink-0">
+                {msg.author[0].toUpperCase()}
+              </div>
+              <span className="text-sm font-semibold">{msg.author}</span>
+            </Link>
             {hidden && (
               <span className="text-xs text-reddot-muted italic bg-reddot-800 px-2 py-0.5 rounded-full">caché</span>
             )}
@@ -101,12 +127,12 @@ function Message({ msg, user, onReply, depth = 0, topicLocked }) {
             )}
           </div>
           <span className="text-xs text-reddot-muted tabular-nums">
-            {new Date(msg.createdAt).toLocaleDateString('fr-FR')}
+            {formatDate(msg.createdAt)}
           </span>
         </div>
 
         {/* Content */}
-        <p className="text-sm text-reddot-text leading-relaxed px-4 py-3.5">{msg.content}</p>
+        <p className="text-sm text-reddot-text leading-relaxed px-4 py-3.5">{renderContent(msg.content)}</p>
 
         {/* Actions */}
         <div className="flex items-center gap-2.5 px-4 pb-3 pt-2 border-t border-reddot-800/50 flex-wrap">
@@ -177,12 +203,13 @@ function Message({ msg, user, onReply, depth = 0, topicLocked }) {
         {/* Reply form */}
         {showReply && (
           <div className="mx-4 mb-4 bg-reddot-800/40 rounded-xl p-3 space-y-2 border border-reddot-800 animate-slide-down">
-            <textarea
-              className="w-full bg-reddot-950/60 rounded-lg px-3 py-2 text-sm text-reddot-text placeholder-reddot-muted outline-none focus:ring-2 focus:ring-reddot-red resize-none border border-reddot-800"
+            <MentionTextarea
+              value={replyContent}
+              onChange={setReplyContent}
+              participants={participants}
               placeholder="Votre réponse..."
               rows={2}
-              value={replyContent}
-              onChange={e => setReplyContent(e.target.value)}
+              className="w-full bg-reddot-950/60 rounded-lg px-3 py-2 text-sm text-reddot-text placeholder-reddot-muted outline-none focus:ring-2 focus:ring-reddot-red resize-none border border-reddot-800"
             />
             <div className="flex gap-2">
               <button
@@ -203,7 +230,7 @@ function Message({ msg, user, onReply, depth = 0, topicLocked }) {
       </div>
 
       {msg.replies && msg.replies.map(reply => (
-        <Message key={reply.id} msg={reply} user={user} onReply={onReply} depth={depth + 1} topicLocked={topicLocked} />
+        <Message key={reply.id} msg={reply} user={user} onReply={onReply} depth={depth + 1} topicLocked={topicLocked} participants={participants} />
       ))}
     </div>
   )
@@ -289,6 +316,8 @@ export default function TopicPage() {
     }
   }
 
+  const participants = collectParticipants(messages, topic?.author)
+
   if (!topic) return <p className="text-reddot-muted">Chargement...</p>
 
   return (
@@ -330,16 +359,16 @@ export default function TopicPage() {
 
               {/* Meta */}
               <div className="flex items-center gap-1.5 text-xs text-reddot-muted flex-wrap">
-                <div className="flex items-center gap-1.5">
+                <Link to={`/profile/${topic.author}`} className="flex items-center gap-1.5 hover:text-reddot-text transition">
                   <div className="w-4 h-4 rounded-full bg-reddot-red flex items-center justify-center text-[9px] font-bold shrink-0">
                     {topic.author[0].toUpperCase()}
                   </div>
                   <span>{topic.author}</span>
-                </div>
+                </Link>
                 <span className="text-reddot-800 mx-0.5">·</span>
                 <span>{topic.views} vues</span>
                 <span className="text-reddot-800 mx-0.5">·</span>
-                <span>{new Date(topic.createdAt).toLocaleDateString('fr-FR')}</span>
+                <span>{formatDate(topic.createdAt)}</span>
                 <span className="text-reddot-800 mx-0.5">·</span>
                 <span>{messages.length} {messages.length === 1 ? 'réponse' : 'réponses'}</span>
               </div>
@@ -411,7 +440,7 @@ export default function TopicPage() {
         <div className="space-y-1">
           {messages.map((msg, i) => (
             <div key={msg.id} style={{ animationDelay: `${i * 50}ms` }} className="animate-fade-in">
-              <Message msg={msg} user={user} onReply={fetchMessages} depth={0} topicLocked={locked} />
+              <Message msg={msg} user={user} onReply={fetchMessages} depth={0} topicLocked={locked} participants={participants} />
             </div>
           ))}
         </div>
@@ -429,14 +458,15 @@ export default function TopicPage() {
           </div>
         </div>
       ) : user ? (
-        <div className="bg-reddot-900 rounded-2xl border border-reddot-800 overflow-hidden">
+        <div className="bg-reddot-900 rounded-2xl border border-reddot-800">
           <div className="px-4 pt-4 pb-3 space-y-3">
-            <textarea
-              className="w-full bg-reddot-800 rounded-xl px-4 py-3 text-reddot-text placeholder-reddot-muted outline-none focus:ring-2 focus:ring-reddot-red resize-none text-sm leading-relaxed"
+            <MentionTextarea
+              value={newMessage}
+              onChange={setNewMessage}
+              participants={participants}
               placeholder="Écrire un message..."
               rows={3}
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
+              className="w-full bg-reddot-800 rounded-xl px-4 py-3 text-reddot-text placeholder-reddot-muted outline-none focus:ring-2 focus:ring-reddot-red resize-none text-sm leading-relaxed"
             />
             <div className="flex items-center justify-between">
               <span className="text-xs text-reddot-muted/60">

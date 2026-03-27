@@ -1,9 +1,19 @@
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { apiFetch } from '../api/client'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [pendingReports, setPendingReports] = useState(0)
+
+  useEffect(() => {
+    if (!user || user.role !== 'ADMIN') return
+    apiFetch('/api/admin/reports?resolved=false')
+      .then(data => setPendingReports(Array.isArray(data) ? data.length : (data?.content?.length ?? 0)))
+      .catch(() => {})
+  }, [user])
 
   const handleLogout = () => {
     logout()
@@ -42,8 +52,13 @@ export default function Navbar() {
             </>
           )}
           {user && user.role === 'ADMIN' && (
-            <Link to="/admin" className="text-sm text-reddot-muted hover:text-reddot-red-light transition">
-                Dashboard Admin
+            <Link to="/admin" className="relative text-sm text-reddot-muted hover:text-reddot-red-light transition">
+              Dashboard Admin
+              {pendingReports > 0 && (
+                <span className="absolute -top-2 -right-4 min-w-[16px] h-4 bg-reddot-red text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                  {pendingReports > 99 ? '99+' : pendingReports}
+                </span>
+              )}
             </Link>
           )}
         </div>
