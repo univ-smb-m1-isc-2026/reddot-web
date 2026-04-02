@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { formatDate } from '../utils/date'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../api/client'
@@ -85,6 +85,16 @@ function Message({ msg, user, onReply, depth = 0, topicLocked, participants }) {
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm('Supprimer ce message ? Cette action est irréversible.')) return
+    try {
+      await apiFetch(`/api/messages/${msg.id}`, { method: 'DELETE' })
+      onReply()
+    } catch {
+      alert('Erreur lors de la suppression')
+    }
+  }
+
   const handleModerate = async (field, value) => {
     try {
       await apiFetch(`/api/admin/messages/${msg.id}`, {
@@ -166,16 +176,32 @@ function Message({ msg, user, onReply, depth = 0, topicLocked, participants }) {
           )}
 
           {user && !isAdmin && (
-            <button
-              onClick={handleReport}
-              className="text-xs text-reddot-muted hover:text-reddot-red-light transition ml-auto"
-            >
-              Signaler
-            </button>
+            <div className="flex items-center gap-2 ml-auto">
+              {user.username === msg.author && (
+                <button
+                  onClick={handleDelete}
+                  className="text-xs text-reddot-muted hover:text-reddot-red-light transition"
+                >
+                  Supprimer
+                </button>
+              )}
+              <button
+                onClick={handleReport}
+                className="text-xs text-reddot-muted hover:text-reddot-red-light transition"
+              >
+                Signaler
+              </button>
+            </div>
           )}
 
           {isAdmin && (
             <div className="flex items-center gap-1.5 ml-auto">
+              <button
+                onClick={handleDelete}
+                className="text-xs text-reddot-muted hover:text-reddot-red-light transition"
+              >
+                Supprimer
+              </button>
               <button
                 onClick={() => handleModerate('hidden', !hidden)}
                 className={`text-xs px-2.5 py-1 rounded-full border transition font-medium ${
@@ -245,6 +271,7 @@ export default function TopicPage() {
   const [hidden, setHidden] = useState(false)
   const [locked, setLocked] = useState(false)
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const isAdmin = user?.role === 'ADMIN'
 
@@ -300,6 +327,16 @@ export default function TopicPage() {
       alert('Topic signalé !')
     } catch {
       alert('Erreur lors du signalement')
+    }
+  }
+
+  const handleDeleteTopic = async () => {
+    if (!confirm('Supprimer ce topic ? Cette action est irréversible.')) return
+    try {
+      await apiFetch(`/api/topics/${id}`, { method: 'DELETE' })
+      navigate('/')
+    } catch {
+      alert('Erreur lors de la suppression')
     }
   }
 
@@ -377,12 +414,22 @@ export default function TopicPage() {
             {/* Action buttons */}
             <div className="flex flex-col gap-2 shrink-0">
               {user && !isAdmin && (
-                <button
-                  onClick={handleReport}
-                  className="text-xs text-reddot-muted hover:text-reddot-red-light transition px-3 py-1.5 rounded-full border border-reddot-800 hover:border-reddot-red"
-                >
-                  Signaler
-                </button>
+                <>
+                  {user.username === topic.author && (
+                    <button
+                      onClick={handleDeleteTopic}
+                      className="text-xs text-reddot-muted hover:text-reddot-red-light transition px-3 py-1.5 rounded-full border border-reddot-800 hover:border-reddot-red"
+                    >
+                      Supprimer
+                    </button>
+                  )}
+                  <button
+                    onClick={handleReport}
+                    className="text-xs text-reddot-muted hover:text-reddot-red-light transition px-3 py-1.5 rounded-full border border-reddot-800 hover:border-reddot-red"
+                  >
+                    Signaler
+                  </button>
+                </>
               )}
               {isAdmin && (
                 <>
@@ -406,6 +453,12 @@ export default function TopicPage() {
                     }`}
                   >
                     {locked ? 'Déverrouiller' : 'Verrouiller'}
+                  </button>
+                  <button
+                    onClick={handleDeleteTopic}
+                    className="text-xs px-3 py-1.5 rounded-full border border-reddot-800 text-reddot-muted hover:border-reddot-red hover:text-reddot-red-light transition font-medium"
+                  >
+                    Supprimer
                   </button>
                 </>
               )}
